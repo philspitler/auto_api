@@ -10,9 +10,7 @@ class AutoApi::Base < Sinatra::Base
     register Sinatra::Reloader
   end
 
-  def initialize(configuration_path)
-    Mongoid.load!(configuration_path)
-  end
+  Mongoid.load!('./config/mongoid.yml')
 
   #WE ARE RETURNING JSON
   before '/*' do
@@ -87,8 +85,8 @@ class AutoApi::Base < Sinatra::Base
 
   def webtry(block)
     begin
-      status 200
-      block.call
+     status 200
+     block.call
     rescue Mongoid::Errors::DocumentNotFound
       status 404
     rescue
