@@ -16,7 +16,16 @@ Or install it yourself as:
 
     $ gem install auto_api
 
+## Requirements
+
+    - MongoDB
+
 ## Usage
+
+### Config File
+
+    - Rename config/mongoid.yml.example to config/mongoid.yml
+    - Make whatever changes to the config file to work in your environment
 
 ### Configure config.ru
 
@@ -29,6 +38,14 @@ map '/api' do #can use whatever path or add version or anything since this is mo
   run AutoApi::Base
 end
 ```
+
+## Warning
+
+This is currently in a prototype/alpha phase.
+
+## Tests / Specs (coming soon)
+
+In order to get this out in the wild as soon as possible, I am pusing the prototype.  Full tests/specs are to come in the very near future.
 
 ## Contributing
 
