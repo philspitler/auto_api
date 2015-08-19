@@ -4,8 +4,12 @@ require "sinatra/json"
 require 'mongoid'
 require 'active_support/inflector'
 require 'active_model'
+require 'logger'
+
+
 
 class AutoApi::Base < Sinatra::Base
+logger = Logger.new(STDOUT)
   configure :development do
     register Sinatra::Reloader
   end
@@ -42,8 +46,10 @@ class AutoApi::Base < Sinatra::Base
   end
 
   post '/:resource/?' do | resource |
+    logger.debug(request.body.read)
+    request.body.rewind
     webtry(lambda {
-    resource = @resource.new(request.POST)
+    resource = @resource.new(JSON.parse request.body.read)
     resource.save!
     json resource
   })
@@ -52,7 +58,7 @@ class AutoApi::Base < Sinatra::Base
   put '/:resource/:id/?' do | resource, id |
     webtry(lambda {
     resource =  @resource.find(id)
-    resource.update_attributes!(request.POST)
+    resource.update_attributes!(JSON.parse request.body.read)
   })
   end
 
@@ -72,7 +78,7 @@ class AutoApi::Base < Sinatra::Base
   post '/:resource1/:id1/:resource2/?' do | resource1, id1, resource2 |
     webtry(lambda {
     parent_resource = @resource1.find(id1)
-    child_resource = @resource2.new(request.POST)
+    child_resource = @resource2.new(request.body.read)
     child_resource.save!
     parent_resource.send(resource2) << child_resource
     json child_resource
@@ -94,4 +100,3 @@ class AutoApi::Base < Sinatra::Base
     end
   end
 end
-
