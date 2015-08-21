@@ -10,6 +10,8 @@ class AutoApi::Base < Sinatra::Base
     register Sinatra::Reloader
   end
 
+  disable :protection
+
   Mongoid.load!('./config/mongoid.yml')
 
   # WE ARE RETURNING JSON
@@ -43,7 +45,7 @@ class AutoApi::Base < Sinatra::Base
 
   post '/:resource/?' do |resource|
     webtry do
-      resource = @resource.new(request.params)
+      resource = @resource.new(JSON.parse request.body.read)
       resource.save!
       json resource
     end
@@ -52,7 +54,7 @@ class AutoApi::Base < Sinatra::Base
   put '/:resource/:id/?' do |resource, id|
     webtry do
       resource = @resource.find(id)
-      resource.update_attributes!(request.params)
+      resource.update_attributes!(JSON.parse request.body.read)
     end
   end
 
@@ -72,7 +74,7 @@ class AutoApi::Base < Sinatra::Base
   post '/:resource1/:id1/:resource2/?' do |_resource1, id1, resource2|
     webtry do
       parent_resource = @resource1.find(id1)
-      child_resource = @resource2.new(request.params)
+      child_resource = @resource2.new(JSON.parse request.body.read)
       child_resource.save!
       parent_resource.send(resource2) << child_resource
       json child_resource
