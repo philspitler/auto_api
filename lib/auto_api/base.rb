@@ -1,27 +1,23 @@
 require 'sinatra'
-require "sinatra/reloader"
-require "sinatra/json"
+require 'sinatra/reloader'
+require 'sinatra/json'
 require 'mongoid'
 require 'active_support/inflector'
 require 'active_model'
-require 'logger'
-
-
 
 class AutoApi::Base < Sinatra::Base
-logger = Logger.new(STDOUT)
   configure :development do
     register Sinatra::Reloader
   end
 
   Mongoid.load!('./config/mongoid.yml')
 
-  #WE ARE RETURNING JSON
+  # WE ARE RETURNING JSON
   before '/*' do
     content_type 'application/json'
   end
 
-  before '/:resource1/:id1/:resource2/?' do | resource1, id1, resource2 |
+  before '/:resource1/:id1/:resource2/?' do |resource1, _id1, resource2|
     @resource1 = Object.const_set(resource1.classify, Class.new)
     @resource1.include(Mongoid::Document)
     @resource1.has_many resource2
@@ -37,66 +33,62 @@ logger = Logger.new(STDOUT)
     end
   end
 
-  get '/:resource/?' do | resource |
-    webtry(lambda { json @resource.all })
+  get '/:resource/?' do |_resource|
+    webtry { json @resource.all }
   end
 
-  get '/:resource/:id/?' do | resource, id |
-    webtry(lambda { json @resource.find(id) })
+  get '/:resource/:id/?' do |_resource, id|
+    webtry { json @resource.find(id) }
   end
 
-  post '/:resource/?' do | resource |
-    logger.debug(request.body.read)
-    request.body.rewind
-    webtry(lambda {
-    resource = @resource.new(JSON.parse request.body.read)
-    resource.save!
-    json resource
-  })
+  post '/:resource/?' do |resource|
+    webtry do
+      resource = @resource.new(request.params)
+      resource.save!
+      json resource
+    end
   end
 
-  put '/:resource/:id/?' do | resource, id |
-    webtry(lambda {
-    resource =  @resource.find(id)
-    resource.update_attributes!(JSON.parse request.body.read)
-  })
+  put '/:resource/:id/?' do |resource, id|
+    webtry do
+      resource = @resource.find(id)
+      resource.update_attributes!(request.params)
+    end
   end
 
-  delete '/:resource/:id/?' do | resource, id |
-    webtry(lambda { json @resource.find(id).delete })
+  delete '/:resource/:id/?' do |_resource, id|
+    webtry { json @resource.find(id).delete }
   end
 
   delete '/:resource/?' do
-    webtry(lambda { json @resource.all.delete })
+    webtry { json @resource.all.delete }
   end
 
-  #NESTED
-  get '/:resource1/:id1/:resource2/?' do | resource1, id1, resource2 |
-    webtry(lambda { json @resource1.find(id1).send(resource2) })
+  # NESTED
+  get '/:resource1/:id1/:resource2/?' do |_resource1, id1, resource2|
+    webtry { json @resource1.find(id1).send(resource2) }
   end
 
-  post '/:resource1/:id1/:resource2/?' do | resource1, id1, resource2 |
-    webtry(lambda {
-    parent_resource = @resource1.find(id1)
-    child_resource = @resource2.new(request.body.read)
-    child_resource.save!
-    parent_resource.send(resource2) << child_resource
-    json child_resource
-  })
-  end
-
-  delete '/:resource1/:id1/:resource2/?' do | resource1, id1, resource2 |
-    webtry(lambda { json @resource1.find(id1).send(resource2).all.delete })
-  end
-
-  def webtry(block)
-    begin
-     status 200
-     block.call
-    rescue Mongoid::Errors::DocumentNotFound
-      status 404
-    rescue
-      status 500
+  post '/:resource1/:id1/:resource2/?' do |_resource1, id1, resource2|
+    webtry do
+      parent_resource = @resource1.find(id1)
+      child_resource = @resource2.new(request.params)
+      child_resource.save!
+      parent_resource.send(resource2) << child_resource
+      json child_resource
     end
+  end
+
+  delete '/:resource1/:id1/:resource2/?' do |_resource1, id1, resource2|
+    webtry { json @resource1.find(id1).send(resource2).all.delete }
+  end
+
+  def webtry
+    status 200
+    yield
+  rescue Mongoid::Errors::DocumentNotFound
+    status 404
+  rescue
+    status 500
   end
 end
