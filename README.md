@@ -1,4 +1,5 @@
 # AutoApi
+[![Gem Version](https://badge.fury.io/rb/auto_api.svg)](https://badge.fury.io/rb/auto_api)
 
 AutoApi generates a RESTful API on the fly.  If you call gets on items that do not exist, you get back what you'd expect if the object didn't exist.  If you POST to something, even if it doesn't exist, it will create it on the fly, which then can be retreived from the database.  It runs on Sinatra and MongoDB.
 
