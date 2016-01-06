@@ -51,6 +51,8 @@ Or install it yourself as:
 
 ## Requirements
 
+    - Ruby
+    - Sinatra
     - MongoDB
 
 ## Usage
